@@ -69,3 +69,21 @@ Ziel der Arbeit ist es, die erlernte Programmiersprache C anzuwenden. Da es sich
 | BCM | wPi |   Name  | Mode | V | Physical | V | Mode | Name    | wPi | BCM |
 +-----+-----+---------+------+---+---Pi 4B--+---+------+---------+-----+-----+
 ````
+
+## Aufbau der Schaltung:
+
+### Verwendete Sensoren:
+- Stromversorgung über 3V und GND
+- 3 Sensoren, eine LED (Grün/Rot)
+- Temperatur/Feuchtigkeitssensor (DHT-11)
+- Kapazitiver Bodenfeuchtigkeitssensor (CAP-SHYG)
+- Lichtsensor (K-018)
+- umschaltbare LED (K-011)
+
+### Belegung der PINs:
+Lediglich betrachtung der Signalleitung, Stromversorgung über Bus-Stripes
+(Sensor, BCM, wPi)
+- DHT-11, #25, 6
+- CAP-SHYG, #18, 1
+- K-018, #24, 5
+- K-011, #23, 4
