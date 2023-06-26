@@ -1,10 +1,10 @@
 # Informatik3HA
 Hausarbeit im Modul Informatik
 
-##Aufgabenstellung.
+## Aufgabenstellung.
 Ziel der Arbeit ist es, die erlernte Programmiersprache C anzuwenden. Da es sich um eine sehr hardwarenahe Sprache handelt, soll dies mit einem praktischen Aufbau verknüpft werden. Die folgenden Anforderungen beziehen sich daher sowohl auf die Software wie auch auf die Hardware
 
-##Anforderungen:
+## Anforderungen:
 1. Für den Aufbau der Hardware sollen ein Raspberry Pi und verschiedene Sensoren/Aktoren verwendet werden.
 2. Der Aufbau soll mindestens vier Sensoren und/oder Aktoren beinhalten.
 3. Der Aufbau muss in einem Dokument beschrieben werden.
