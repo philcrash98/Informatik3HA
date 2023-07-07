@@ -14,8 +14,45 @@ typedef struct {
     double alert;
 } sensorData;
 
-void getSensorValues() {
+char rawData[255];
 
+int getSensorData() {
+    while(1) {
+        ssize_t len = read(serial_port, &rawData, sizeof(rawData));  // Daten von der seriellen Schnittstelle lesen
+        if (len > 0) {
+            break;
+        }
+    }
+}
+
+void parseSensorValues(char rawData[]) {
+
+}
+
+int backToMenu() {
+    char myChar;
+    int validInput;
+    if (kbhit()) {
+        printf("Zurueck zum Hauptmenu?  y/n \n");
+        fflush(stdin);
+        do {
+            scanf("%c", &myChar);
+            switch (myChar) {
+                case 'y':
+                    validInput = 1;
+                    return 1;
+                    break;
+                case 'n':
+                    validInput = 1;
+                    return 0;
+                    break;
+                default:
+                    printf("Falsche Eingabe\n");
+                    validInput = 0;
+                    break;
+            }
+        } while (validInput == 0);
+    }
 }
 
 void importData()
@@ -138,7 +175,7 @@ int readDataOutput() {
         } else {
             sensorData data;
             // Hier sensordaten empfangen
-            sensorValues = getSensorValues();
+            getSensorData();
             /* Print Values */
             parseStringToStruct(sensorValues, &data, 1);
 
@@ -152,32 +189,7 @@ int readDataOutput() {
     }
 }
 
-int backToMenu() {
-    char myChar;
-    int validInput;
-    if (kbhit()) {
-        printf("Zurueck zum Hauptmenu?  y/n \n");
-        fflush(stdin);
-        do {
-            scanf("%c", &myChar);
-            switch (myChar) {
-                case 'y':
-                    validInput = 1;
-                    return 1;
-                    readDataOutput();
-                    break;
-                case 'n':
-                    validInput = 1;
-                    return 0;
-                    break;
-                default:
-                    printf("Falsche Eingabe\n");
-                    validInput = 0;
-                    break;
-            }
-        } while (validInput == 0);
-    }
-}
+
 
 void mainMenu() { // Funktion um das Hauptmenu in der Konsole auszuführen
     char myChar;
@@ -241,12 +253,10 @@ int main() {
 
     tcsetattr(serial_port, TCSANOW, &tty);  // Konfiguration anwenden
 
-    char buf[255];
-
-    for (;;)
-    {
+    for (;;) {
         mainMenu();
     }
 
+    close(serial_port);
     return 0;
 }
