@@ -8,7 +8,7 @@ struct sensorData
 	double temp;
 	double airhum;
 	double grdhum;
-	double occupacy;
+	double brightness;
 	double alert;
 };
 
@@ -110,6 +110,7 @@ int readDataOutput()
 		else
 		{
 			/* Print Values */
+
 		}
 	}
 }
