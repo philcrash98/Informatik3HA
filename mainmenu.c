@@ -3,14 +3,13 @@
 #include <stdio.h>
 #include <conio.h>
 
-struct sensorData
-{
-	double temp;
-	double airhum;
-	double grdhum;
-	double brightness;
-	double alert;
-};
+typedef struct {
+    double temp;
+    double airhum;
+    double grdhum;
+    double brightness;
+    double alert;
+} sensorData;
 
 void mainMenu() // Funktion um das Hauptmenu in der Konsole auszuführen
 {
@@ -96,6 +95,7 @@ int backToMenu()
 int readDataOutput()
 {
 	char c;
+	char sensorValues;
 
 	system("@cls||clear");
 	printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
@@ -109,8 +109,18 @@ int readDataOutput()
 		}
 		else
 		{
+			sensorData data;
+			// Hier sensordaten empfangen
+			sensorValues = getSensorValues();
 			/* Print Values */
+			parseStringToStruct(sensorValues, &data, 1);
 
+			// Ausgabe der gemessenen Werte
+			printf("Temperature: %.2f\n", data.temp);
+			printf("Air Humidity: %.2f\n", data.airhum);
+			printf("Ground Humidity: %.2f\n", data.grdhum);
+			printf("Brightness: %.2f\n", data.brightness);
+			printf("Alert: %.2f\n", data.alert);
 		}
 	}
 }
@@ -153,14 +163,12 @@ void exportData()
 			printf("Dateinamen waehlen!\n");
 			fflush(stdin);
 			scanf("%s", filename);
-			strcat(filename,".txt");
+			strcat(filename, ".txt");
 
 			/* 	FILE *fptr;
 			fptr = fopen("filename.txt", "w"); */
 		}
 	}
-
-	
 }
 
 void settings()
@@ -201,9 +209,47 @@ void formatValues(double value, char *result) // Funktion um Double Daten in For
 	result[20] = '\0';
 }
 
+void parseStringToStruct(const char *input, sensorData *data, int maxCount)
+{
+	char *inputCopy = strdup(input);
+	char *token = strtok(inputCopy, ";");
+
+	int count = 0;
+	while (token != NULL && count < maxCount)
+	{
+		switch (count)
+		{
+		case 0:
+			data->temp = atof(token);
+			break;
+		case 1:
+			data->airhum = atof(token);
+			break;
+		case 2:
+			data->grdhum = atof(token);
+			break;
+		case 3:
+			data->brightness = atof(token);
+			break;
+		case 4:
+			data->alert = atof(token);
+			break;
+		}
+
+		token = strtok(NULL, ";");
+		count++;
+	}
+
+	free(inputCopy);
+}
+
+void getSensorValues(){
+
+}
+
 int main()
 {
-
+	
 	for (;;)
 	{
 		mainMenu();
