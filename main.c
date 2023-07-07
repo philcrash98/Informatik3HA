@@ -25,7 +25,7 @@ char rawData[255];
 void setAlert();
 
 int getSensorData() {
-    while(1) {
+    while (1) {
         ssize_t len = read(serial_port, &rawData, sizeof(rawData));  // Daten von der seriellen Schnittstelle lesen
         if (len > 0) {
             return 1;
@@ -59,40 +59,30 @@ int backToMenu() {
     }
 }
 
-void importData()
-{
+void importData() {
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
-    for (;;)
-    {
+    for (;;) {
         int value = backToMenu();
-        if (value == 1)
-        {
+        if (value == 1) {
             /* return to Mainmenu */
             return 0;
-        }
-        else
-        {
+        } else {
             /* Import Values */
         }
     }
 }
 
-int exportData()
-{
+int exportData() {
     char filename[128];
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
-    for (;;)
-    {
+    for (;;) {
         int value = backToMenu();
-        if (value == 1)
-        {
+        if (value == 1) {
             /* return to Mainmenu */
             return 0;
-        }
-        else
-        {
+        } else {
             /* Export Values */
             printf("Dateinamen waehlen!\n");
             fflush(stdin);
@@ -117,12 +107,6 @@ int settings() {
             /* show Settings */
         }
     }
-}
-
-void dataConsoleOutput(temp, airhum, grdhum, occupacy, alert) { // Funktion um Daten in Tabellarischer Form auszugeben
-
-    printf("|  Temperatur   | Luftfeuchtigkeit | Bodenfeuchtigkeit |   Helligkeit  | Alarm |");
-    printf("|%s|%s|%s|%s|%s|", &temp, &airhum, &grdhum, &occupacy, &alert);
 }
 
 void formatValues(double value, char *result) { // Funktion um Double Daten in Formatierten String umzuwandeln
@@ -202,11 +186,9 @@ void mainMenu() { // Funktion um das Hauptmenu in der Konsole auszuführen
     printf("4. Einstellungen\n");
     printf("5. Programm beenden\n\n");
     fflush(stdin);
-    do
-    {
+    do {
         scanf("%c", &myChar);
-        switch (myChar)
-        {
+        switch (myChar) {
             case '1':
                 printf("Messung\n");
                 validInput = 1;
