@@ -240,7 +240,7 @@ void mainMenu() { // Funktion um das Hauptmenu in der Konsole auszuführen
 }
 
 int main() {
-    int serial_port = open("/dev/ttyACM0", O_RDWR);  // Serielle Schnittstelle öffnen (passen Sie den Pfad entsprechend an)
+    int serial_port = open("/dev/ttyACM0", O_RDWR);  // Serielle Schnittstelle öffnen
 
     struct termios tty;
     memset(&tty, 0, sizeof(tty));
