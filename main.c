@@ -14,7 +14,15 @@ typedef struct {
     double alert;
 } sensorData;
 
+typedef struct {
+    double tempMax;
+    double tempMin;
+    double grdhum;
+} alerts;
+
 char rawData[255];
+
+void setAlert();
 
 int getSensorData() {
     while(1) {
@@ -23,10 +31,6 @@ int getSensorData() {
             return 1;
         }
     }
-}
-
-void parseSensorValues(char rawData[]) {
-
 }
 
 int backToMenu() {
@@ -74,7 +78,7 @@ void importData()
     }
 }
 
-void exportData()
+int exportData()
 {
     char filename[128];
     system("@cls||clear");
@@ -162,9 +166,6 @@ void parseStringToStruct(const char *input, sensorData *data, int maxCount) {
 }
 
 int readDataOutput() {
-    char c;
-    char sensorValues;
-
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
     for (;;) {
@@ -177,7 +178,7 @@ int readDataOutput() {
             // Hier sensordaten empfangen
             getSensorData();
             /* Print Values */
-            parseStringToStruct(sensorValues, &data, 1);
+            parseStringToStruct(rawData, &data, 4);
 
             // Ausgabe der gemessenen Werte
             printf("Temperature: %.2f\n", data.temp);
@@ -188,8 +189,6 @@ int readDataOutput() {
         }
     }
 }
-
-
 
 void mainMenu() { // Funktion um das Hauptmenu in der Konsole auszuführen
     char myChar;
