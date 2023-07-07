@@ -20,7 +20,7 @@ int getSensorData() {
     while(1) {
         ssize_t len = read(serial_port, &rawData, sizeof(rawData));  // Daten von der seriellen Schnittstelle lesen
         if (len > 0) {
-            break;
+            return 1;
         }
     }
 }
@@ -101,7 +101,7 @@ void exportData()
     }
 }
 
-void settings() {
+int settings() {
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
     for (;;) {
