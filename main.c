@@ -73,7 +73,7 @@ void importData()
         }
         else
         {
-            /* Print Values */
+            /* Import Values */
         }
     }
 }
@@ -93,7 +93,7 @@ int exportData()
         }
         else
         {
-            /* Print Values */
+            /* Export Values */
             printf("Dateinamen waehlen!\n");
             fflush(stdin);
             scanf("%s", filename);
@@ -114,7 +114,7 @@ int settings() {
             /* return to Mainmenu */
             return 0;
         } else {
-            /* shwo Settings */
+            /* show Settings */
         }
     }
 }
