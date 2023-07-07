@@ -1,3 +1,5 @@
+// Arduino source code
+
 #include <DHT.h>
 
 DHT sensor(2, DHT11);
