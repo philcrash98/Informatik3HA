@@ -21,9 +21,20 @@ typedef struct {
 } alerts;
 
 char rawData[255];
+alerts alertSettings;
 
-void setAlert();
+/**
+ *
+ * @param data
+ */
+void setAlert(sensorData data) {
 
+}
+
+/**
+ *
+ * @return
+ */
 int getSensorData() {
     while (1) {
         ssize_t len = read(serial_port, &rawData, sizeof(rawData));  // Daten von der seriellen Schnittstelle lesen
@@ -66,7 +77,7 @@ void importData() {
         int value = backToMenu();
         if (value == 1) {
             /* return to Mainmenu */
-            return 0;
+            return;
         } else {
             /* Import Values */
         }
@@ -108,8 +119,12 @@ int settings() {
         }
     }
 }
-
-void formatValues(double value, char *result) { // Funktion um Double Daten in Formatierten String umzuwandeln
+/**
+ * Funktion um Double Daten in Formatierten String umzuwandeln
+ * @param value
+ * @param result
+ */
+void formatValues(double value, char *result) {
     snprintf(result, 21, "%f", value);
     int len = strlen(result);
     for (int i = len; i < 20; i++) {
@@ -163,7 +178,7 @@ int readDataOutput() {
             getSensorData();
             /* Print Values */
             parseStringToStruct(rawData, &data, 4);
-
+            setAlert(data);
             // Ausgabe der gemessenen Werte
             printf("Temperature: %.2f\n", data.temp);
             printf("Air Humidity: %.2f\n", data.airhum);
@@ -174,7 +189,10 @@ int readDataOutput() {
     }
 }
 
-void mainMenu() { // Funktion um das Hauptmenu in der Konsole auszuführen
+/**
+ * Funktion um das Hauptmenu in der Konsole auszuführen
+ */
+void mainMenu() {
     char myChar;
     int validInput;
     system("@cls||clear");
@@ -222,7 +240,8 @@ void mainMenu() { // Funktion um das Hauptmenu in der Konsole auszuführen
 }
 
 int main() {
-    int serial_port = open("/dev/ttyACM0", O_RDWR);  // Serielle Schnittstelle öffnen
+    // Serielle Schnittstelle öffnen
+    int serial_port = open("/dev/ttyACM0", O_RDWR);
 
     struct termios tty;
     memset(&tty, 0, sizeof(tty));
