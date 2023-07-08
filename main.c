@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <conio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <curses.h>
 
 typedef struct {
     double temp;
@@ -22,6 +22,35 @@ typedef struct {
 
 char rawData[255];
 alerts alertSettings;
+int serial_port;
+
+// Quelle: https://cboard.cprogramming.com/c-programming/63166-kbhit-linux.html
+int kbhit(void)
+{
+    struct termios oldt, newt;
+    int ch;
+    int oldf;
+
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+
+    ch = getchar();
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    fcntl(STDIN_FILENO, F_SETFL, oldf);
+
+    if(ch != EOF)
+    {
+        ungetc(ch, stdin);
+        return 1;
+    }
+
+    return 0;
+}
 
 /**
  *
@@ -30,34 +59,6 @@ alerts alertSettings;
 void setAlert(sensorData data) {
 
 }
-// Quelle: https://cboard.cprogramming.com/c-programming/63166-kbhit-linux.html
-int kbhit(void)
-{
-  struct termios oldt, newt;
-  int ch;
-  int oldf;
- 
-  tcgetattr(STDIN_FILENO, &oldt);
-  newt = oldt;
-  newt.c_lflag &= ~(ICANON | ECHO);
-  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-  oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-  fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
- 
-  ch = getchar();
- 
-  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-  fcntl(STDIN_FILENO, F_SETFL, oldf);
- 
-  if(ch != EOF)
-  {
-    ungetc(ch, stdin);
-    return 1;
-  }
- 
-  return 0;
-}
-
 
 /**
  *
@@ -73,13 +74,19 @@ int getSensorData() {
 }
 
 int backToMenu() {
-    char myChar;
-    int validInput;
+    char myChar = 'n';
+    int validInput = 0;
+    fflush(stdin);
     if (kbhit()) {
         printf("Zurueck zum Hauptmenu?  y/n \n");
         fflush(stdin);
         do {
             scanf("%c", &myChar);
+            if (myChar != 'y' && myChar != 'n') {
+                printf("Falsche Eingabe\n");
+                validInput = 0;
+                break;
+            }
             switch (myChar) {
                 case 'y':
                     validInput = 1;
@@ -89,13 +96,10 @@ int backToMenu() {
                     validInput = 1;
                     return 0;
                     break;
-                default:
-                    printf("Falsche Eingabe\n");
-                    validInput = 0;
-                    break;
             }
         } while (validInput == 0);
     }
+    return 0;
 }
 
 void importData() {
@@ -196,23 +200,23 @@ int readDataOutput() {
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
     for (;;) {
+        sensorData data;
+        // Hier sensordaten empfangen
+        getSensorData();
+        /* Print Values */
+        parseStringToStruct(rawData, &data, 4);
+        setAlert(data);
+        // Ausgabe der gemessenen Werte
+        printf("Temperature: %.2f\n", data.temp);
+        printf("Air Humidity: %.2f\n", data.airhum);
+        printf("Ground Humidity: %.2f\n", data.grdhum);
+        printf("Brightness: %.2f\n", data.brightness);
+        printf("Alert: %.2f\n", data.alert);
+        sleep(3);
         int value = backToMenu();
         if (value == 1) {
             /* return to Mainmenu */
             return 0;
-        } else {
-            sensorData data;
-            // Hier sensordaten empfangen
-            getSensorData();
-            /* Print Values */
-            parseStringToStruct(rawData, &data, 4);
-            setAlert(data);
-            // Ausgabe der gemessenen Werte
-            printf("Temperature: %.2f\n", data.temp);
-            printf("Air Humidity: %.2f\n", data.airhum);
-            printf("Ground Humidity: %.2f\n", data.grdhum);
-            printf("Brightness: %.2f\n", data.brightness);
-            printf("Alert: %.2f\n", data.alert);
         }
     }
 }
@@ -269,7 +273,7 @@ void mainMenu() {
 
 int main() {
     // Serielle Schnittstelle öffnen
-    int serial_port = open("/dev/ttyACM0", O_RDWR);
+    serial_port = open("/dev/ttyACM0", O_RDWR);
 
     struct termios tty;
     memset(&tty, 0, sizeof(tty));
