@@ -73,6 +73,7 @@ int getSensorData() {
     }
 }
 
+// TODO: Ablauf statisch machen
 int backToMenu() {
     char myChar = 'n';
     int validInput = 0;
@@ -196,6 +197,7 @@ void parseStringToStruct(const char *input, sensorData *data, int maxCount) {
     free(inputCopy);
 }
 
+// TODO: Explizit neu messen
 int readDataOutput() {
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
