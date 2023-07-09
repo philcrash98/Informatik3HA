@@ -20,11 +20,14 @@ typedef struct {
     double grdhum;
 } alerts;
 
-//char rawData[255];
-char rawData[] = "23.80;50.00;89.00;72.00;79.00";
+char rawData[255];
 alerts alertSettings;
 int serial_port;
 sensorData data[1000];
+
+//Prototypen definieren
+void parseStringToStruct(const char* input, sensorData* data, int maxCount);
+
 
 // Quelle: https://cboard.cprogramming.com/c-programming/63166-kbhit-linux.html
 int kbhit(void)
@@ -250,8 +253,10 @@ void formatValues(double value, char* result) {
  */
 void dataTableOutput(sensorData dataArray[], int arraySize) {
     system("@cls||clear");
-    printf("|Temperatur         |Luftfeuchtigkeit   |Bodenfeuchtigkeit  |Helligkeit         |Alarm              |\n");
-    printf("|-------------------|-------------------|-------------------|-------------------|-------------------|\n");
+    printf(""
+           "Um die Messung abzubrechen, 'ESC' drücken."
+           "|Temperatur         |Luftfeuchtigkeit   |Bodenfeuchtigkeit  |Helligkeit         |Alarm              |\n"
+           "|-------------------|-------------------|-------------------|-------------------|-------------------|\n");
     
     for (int i = 0; i < arraySize; i++) {
         char ctemp[20], cairhum[20], cgrdhum[20], cbrightness[20], calert[20];
@@ -263,7 +268,11 @@ void dataTableOutput(sensorData dataArray[], int arraySize) {
         printf("|%s|%s|%s|%s|%s|\n", ctemp, cairhum, cgrdhum, cbrightness, calert);
     }
 }
-// TODO: Explizit neu messen
+
+/**
+ *
+ * @return
+ */
 int readDataOutput() {
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
@@ -273,7 +282,7 @@ int readDataOutput() {
         //const char* input = "23.80;50.00;89.00;72.00;1";
         // Wenn sensordaten empfangen
         getSensorData();
-    
+
         // Sensordaten als String in das Struct speichern
         parseStringToStruct(rawData, &data[i], 5);
         // Daten ausgeben
