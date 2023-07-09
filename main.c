@@ -20,9 +20,11 @@ typedef struct {
     double grdhum;
 } alerts;
 
-char rawData[255];
+//char rawData[255];
+char rawData[] = "23.80;50.00;89.00;72.00;79.00";
 alerts alertSettings;
 int serial_port;
+sensorData data[1000];
 
 // Quelle: https://cboard.cprogramming.com/c-programming/63166-kbhit-linux.html
 int kbhit(void)
@@ -61,7 +63,7 @@ void setAlert(sensorData data) {
 }
 
 /**
- *
+ * Versucht die Sensordaten auszulesen
  * @return
  */
 int getSensorData() {
@@ -102,21 +104,43 @@ int backToMenu() {
     }
     return 0;
 }
-
-void importData() {
+/**
+ * Funktion für das Importieren von Daten
+ */
+int importData() {
+    char filename[128];
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
     for (;;) {
         int value = backToMenu();
         if (value == 1) {
             /* return to Mainmenu */
-            return;
+            return 0 ;
         } else {
             /* Import Values */
+
+            printf("Dateinamen waehlen!\n");
+            fflush(stdin);
+            scanf("%s", filename);
+
+            FILE *fptr;
+            fptr = fopen(filename, "r");
+            
+            char myString[100];
+            int i = 0;
+            while(fgets(myString, 100, fptr)) {
+            parseStringToStruct(myString, &data[i], 5);
+            i++;
+            }
+
+            fclose(fptr); 
+            return i;
         }
     }
 }
-
+/**
+ * Funktion für das Exportieren von Daten
+ */
 int exportData() {
     char filename[128];
     system("@cls||clear");
@@ -133,12 +157,29 @@ int exportData() {
             scanf("%s", filename);
             strcat(filename, ".txt");
 
-            /* 	FILE *fptr;
-            fptr = fopen("filename.txt", "w"); */
+            FILE *fptr;
+            fptr = fopen(filename, "w"); 
+
+            for (size_t i = 0; i < 10; i++)
+            {
+                fprintf(fptr, "%f;%f;%f;%f;%f\n", data[i].temp, data[i].airhum, data[i].grdhum, data[i].brightness, data[i].alert);
+                
+            }
+            fclose(fptr);
+            printf("Datei erstellt!!\n");
+            sleep(2);
+            return 0;
+            
+
+
+            
+
         }
     }
 }
-
+/**
+ * Funktion für die Einstellungen
+ */
 int settings() {
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
@@ -152,23 +193,16 @@ int settings() {
         }
     }
 }
-/**
- * Funktion um Double Daten in Formatierten String umzuwandeln
- * @param value
- * @param result
- */
-void formatValues(double value, char *result) {
-    snprintf(result, 21, "%f", value);
-    int len = strlen(result);
-    for (int i = len; i < 20; i++) {
-        result[i] = ' ';
-    }
-    result[20] = '\0';
-}
 
-void parseStringToStruct(const char *input, sensorData *data, int maxCount) {
-    char *inputCopy = strdup(input);
-    char *token = strtok(inputCopy, ";");
+/**
+ * Funktion um aus einem String Daten in ein Stuct umzuwandeln
+ * @param input
+ * @param data
+ * @param maxCount
+ */
+void parseStringToStruct(const char* input, sensorData* data, int maxCount) {
+    char* inputCopy = strdup(input);
+    char* token = strtok(inputCopy, ";");
 
     int count = 0;
     while (token != NULL && count < maxCount) {
@@ -197,30 +231,64 @@ void parseStringToStruct(const char *input, sensorData *data, int maxCount) {
     free(inputCopy);
 }
 
+/**
+ * Funktion um Double Daten in Formatierten String umzuwandeln
+ * Der Wert wird mit Leerzeichen auf 20 Zeichen erweitert
+ * @param value
+ * @param result
+ */
+void formatValues(double value, char* result) {
+    if (value == 0.0) {
+        sprintf(result, "%19s", "0.00");
+    } else {
+        sprintf(result, "%19.2f", value);
+    }
+}
+
+/**
+ * Gibt eine Tabelle mit den Daten aus
+ */
+void dataTableOutput(sensorData dataArray[], int arraySize) {
+    system("@cls||clear");
+    printf("|Temperatur         |Luftfeuchtigkeit   |Bodenfeuchtigkeit  |Helligkeit         |Alarm              |\n");
+    printf("|-------------------|-------------------|-------------------|-------------------|-------------------|\n");
+    
+    for (int i = 0; i < arraySize; i++) {
+        char ctemp[20], cairhum[20], cgrdhum[20], cbrightness[20], calert[20];
+        formatValues(dataArray[i].temp, ctemp);
+        formatValues(dataArray[i].airhum, cairhum);
+        formatValues(dataArray[i].grdhum, cgrdhum);
+        formatValues(dataArray[i].brightness, cbrightness);
+        formatValues(dataArray[i].alert, calert);
+        printf("|%s|%s|%s|%s|%s|\n", ctemp, cairhum, cgrdhum, cbrightness, calert);
+    }
+}
 // TODO: Explizit neu messen
 int readDataOutput() {
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
-    for (;;) {
-        sensorData data;
-        // Hier sensordaten empfangen
+    for (size_t i = 0; i < 1000; i++)
+    {
+        //Mock daten zum Testen
+        //const char* input = "23.80;50.00;89.00;72.00;1";
+        // Wenn sensordaten empfangen
         getSensorData();
-        /* Print Values */
-        parseStringToStruct(rawData, &data, 4);
-        setAlert(data);
-        // Ausgabe der gemessenen Werte
-        printf("Temperature: %.2f\n", data.temp);
-        printf("Air Humidity: %.2f\n", data.airhum);
-        printf("Ground Humidity: %.2f\n", data.grdhum);
-        printf("Brightness: %.2f\n", data.brightness);
-        printf("Alert: %.2f\n", data.alert);
+    
+        // Sensordaten als String in das Struct speichern
+        parseStringToStruct(rawData, &data[i], 5);
+        // Daten ausgeben
+        dataTableOutput(data, 5);
+        //setAlert(data);
+
         sleep(3);
+
         int value = backToMenu();
         if (value == 1) {
             /* return to Mainmenu */
             return 0;
         }
     }
+    
 }
 
 /**
