@@ -24,6 +24,7 @@ char rawData[255];
 alerts alertSettings;
 int serial_port;
 sensorData data[1000];
+int dataIndex = 0;
 
 //Prototypen definieren
 void parseStringToStruct(const char* input, sensorData* data, int maxCount);
@@ -135,7 +136,10 @@ int importData() {
             parseStringToStruct(myString, &data[i], 5);
             i++;
             }
-
+            // Globalen Index setzten damit die importierten Daten vor den neuen geschoben werden.
+            dataIndex = i;
+            printf("%d", dataIndex);
+            sleep(2);
             fclose(fptr); 
             return i;
         }
@@ -241,11 +245,7 @@ void parseStringToStruct(const char* input, sensorData* data, int maxCount) {
  * @param result
  */
 void formatValues(double value, char* result) {
-    if (value == 0.0) {
-        sprintf(result, "%19s", "0.00");
-    } else {
-        sprintf(result, "%19.2f", value);
-    }
+    sprintf(result, "%19.2f", value);
 }
 
 /**
@@ -274,9 +274,18 @@ void dataTableOutput(sensorData dataArray[], int arraySize) {
  * @return
  */
 int readDataOutput() {
-    system("@cls||clear");
-    printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
-    for (size_t i = 0; i < 1000; i++)
+    //system("@cls||clear");
+    //printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
+    int i = dataIndex;
+    if (i != 0)
+    {
+        for (int j = 0; j < i; j++)
+        {
+            dataTableOutput(data, j);
+        }
+    }
+
+    for (i; i < 1000; i++)
     {
         //Mock daten zum Testen
         //const char* input = "23.80;50.00;89.00;72.00;1";
@@ -286,7 +295,7 @@ int readDataOutput() {
         // Sensordaten als String in das Struct speichern
         parseStringToStruct(rawData, &data[i], 5);
         // Daten ausgeben
-        dataTableOutput(data, 5);
+        dataTableOutput(data, i);
         //setAlert(data);
 
         sleep(3);
