@@ -339,29 +339,39 @@ int settingsMenu() {
  */
 void parseStringToStruct(const char *input, sensorData *data, int maxCount) {
     char *inputCopy = strdup(input);
+    // Speichert den String bis zum ;
     char *token = strtok(inputCopy, ";");
 
     int count = 0;
+    // geht den String nach und nach durch und weist die Daten zwischen den Semikulon den Struct Variablen zu
     while (token != NULL && count < maxCount) {
+        // Da die Daten in fester Reihenfolge sind werden sie Nacheinander ausgelesen und zugewiesen
         switch (count) {
             case 0:
+                // Umwandlung String zu Float
                 data->temp = atof(token);
                 break;
             case 1:
+                // Umwandlung String zu Float
                 data->airhum = atof(token);
                 break;
             case 2:
+                // Umwandlung String zu Float
                 data->grdhum = atof(token);
                 break;
             case 3:
+                // Umwandlung String zu Float
                 data->brightness = atof(token);
                 break;
             case 4:
+                // Umwandlung String zu Float
                 data->alert = atof(token);
         }
+        // Token wird auf den nächsten Messwert gesetzt
         token = strtok(NULL, ";");
         count++;
     }
+    // Speicher freigeben sonst möglicher Memory Leak
     free(inputCopy);
 }
 
@@ -387,11 +397,13 @@ void dataTableOutput() {
 
     for (int i = 0; i < arraySize; i++) {
         char ctemp[20], cairhum[20], cgrdhum[20], cbrightness[20], calert[20];
+        // Die Double Werte aus dem Struct werden in ein 20 Zeichen lagen String umgewandelt
         formatValues(dataArray[i].temp, ctemp);
         formatValues(dataArray[i].airhum, cairhum);
         formatValues(dataArray[i].grdhum, cgrdhum);
         formatValues(dataArray[i].brightness, cbrightness);
         formatValues(dataArray[i].alert, calert);
+        // Ausgabe der Tabellenzeile
         printf("|%s|%s|%s|%s|%s|\n", ctemp, cairhum, cgrdhum, cbrightness, calert);
     }
 }
@@ -402,6 +414,7 @@ void dataTableOutput() {
  * @return
  */
 void readDataOutput() {
+    // Esc Taste 
     char key = 27;
     // Wenn bereits werte Importiert wurden
     if (arraySize != 0) {
@@ -418,6 +431,7 @@ void readDataOutput() {
         parseStringToStruct(serialRead, &dataArray[arraySize], 4);
         // Daten ausgeben
         dataTableOutput();
+        // Wenn Esc Taste gedrückt Abruch
         if (getchar() == key) {
             break;
         }
