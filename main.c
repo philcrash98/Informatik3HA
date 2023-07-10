@@ -65,7 +65,6 @@ alerts alertSettings = {
 sensorData dataArray[1000];
 sensorData lastRead;
 
-
 // Main Funktion definieren
 /**
  * Main Funktion
@@ -95,6 +94,7 @@ int main() {
 
     // Einstellungen laden
     loadSettings();
+    setAlert();
 
     // Hauptmenu anzeigen
     do {
@@ -108,7 +108,6 @@ int main() {
 // Funktionen definieren
 /**
  *  Funktion die den LED Alarm bei bestimmten Schwellenwerten auslöst
- * @param data
  */
 int setAlert() {
     // HIGH Gelb
@@ -191,15 +190,10 @@ int importData() {
     // Globalen Index setzten damit die importierten Daten vor den neuen geschoben werden.
     arraySize = i;
     printf("%d", dataIndex);
-    sleep(2);
     fclose(fptr);
+    printf("Daten importiert.");
+    sleep(2);
     return 0;
-
-    int value = backToMenu();
-    if (value == 1) {
-        /* return to Mainmenu */
-        return 0;
-    }
 }
 
 /**
@@ -210,30 +204,22 @@ int exportData() {
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
     for (;;) {
-        int value = backToMenu();
-        if (value == 1) {
-            /* return to Mainmenu */
-            return 0;
-        } else {
-            /* Export Values */
-            printf("Dateinamen waehlen!\n");
-            fflush(stdin);
-            scanf("%s", filename);
-            strcat(filename, ".txt");
-
-            FILE *fptr;
-            fptr = fopen(filename, "w");
-
-            for (size_t i = 0; i < 10; i++) {
-                fprintf(fptr, "%f;%f;%f;%f;%f\n", dataArray[i].temp, dataArray[i].airhum, dataArray[i].grdhum,
-                        dataArray[i].brightness,
-                        dataArray[i].alert);
-            }
-            fclose(fptr);
-            printf("Datei erstellt!!\n");
-            sleep(2);
-            return 0;
+        /* Export Values */
+        printf("Dateinamen waehlen!\n");
+        fflush(stdin);
+        scanf("%s", filename);
+        strcat(filename, ".txt");
+        FILE *fptr;
+        fptr = fopen(filename, "w");
+        for (size_t i = 0; i < 10; i++) {
+            fprintf(fptr, "%f;%f;%f;%f;%f\n", dataArray[i].temp, dataArray[i].airhum, dataArray[i].grdhum,
+                    dataArray[i].brightness,
+                    dataArray[i].alert);
         }
+        fclose(fptr);
+        printf("Datei erstellt!!\n");
+        sleep(2);
+        return 0;
     }
 }
 
@@ -381,7 +367,7 @@ void formatValues(double value, char *result) {
 void dataTableOutput() {
     system("@cls||clear");
     printf(""
-           "Um die Messung abzubrechen, 'ESC' eingeben.\n"
+           "Neue Messung mit [Enter], Messung beenden mit [ESC]\n"
            "|Temperatur         |Luftfeuchtigkeit   |Bodenfeuchtigkeit  |Helligkeit         |Alarm              |\n"
            "|-------------------|-------------------|-------------------|-------------------|-------------------|\n");
 
@@ -416,6 +402,8 @@ void readDataOutput() {
         getSensorData();
         // Sensordaten als String in das Struct speichern
         parseStringToStruct(serialRead, &dataArray[arraySize], 4);
+        lastRead = dataArray[arraySize];
+        setAlert();
         // Daten ausgeben
         dataTableOutput();
         if (getchar() == key) {
