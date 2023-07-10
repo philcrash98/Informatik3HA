@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <wiringPi.h>
 
 typedef struct {
     double temp;
@@ -16,30 +17,100 @@ typedef struct {
 typedef struct {
     double tempMax;
     double tempMin;
-    double grdhum;
+    double grdHum;
 } alerts;
 
-char rawData[255];
-alerts alertSettings;
-int serial_port;
-sensorData dataArray[1000];
-int arraySize = 0;
-int arrayMaxSize = 1000;
-int dataIndex = 0;
 
 //Prototypen definieren
-void parseStringToStruct(const char *input, sensorData *data, int maxCount);
+int mainMenu();
 
 int backToMenu();
 
+int settingsMenu();
+
+int saveSettings();
+
+int loadSettings();
+
+int changeSettings();
+
+int importData();
+
+int exportData();
+
 int getSensorData();
 
+int setAlert(sensorData senData);
+
+void dataTableOutput();
+
+void readDataOutput();
+
+void formatValues(double value, char *result);
+
+void parseStringToStruct(const char *input, sensorData *data, int maxCount);
+
+// Globale Variablen
+int LED_PIN = 2;
+char serialRead[255];
+int arraySize = 0;
+int arrayMaxSize = 1000;
+int dataIndex = 0;
+int serial_port;
+alerts alertSettings = {.tempMax = 50.00, .tempMin = 2.00, .grdHum = 20.00};
+sensorData dataArray[1000];
+sensorData lastRead;
+
+/**
+ *
+ * @return
+ */
+int main() {
+    int cont;
+    // Serielle Schnittstelle öffnen
+    serial_port = open("/dev/ttyACM0", O_RDWR);
+
+    struct termios tty;
+    memset(&tty, 0, sizeof(tty));
+
+    // Serielle Schnittstellenkonfiguration
+    tty.c_cflag = B9600;  // Baudrate
+    tty.c_cflag |= CS8;   // 8 Datenbits
+    tty.c_cflag |= CLOCAL | CREAD;  // Lokale Verbindung, Empfang aktivieren
+
+    tcsetattr(serial_port, TCSANOW, &tty);  // Konfiguration anwenden
+
+    // Wiring Pi initialisieren
+    if (wiringPiSetup() == -1)
+        exit(1);
+
+    wiringPiSetup();
+    pinMode(LED_PIN, OUTPUT);
+
+    // Einstellungen laden
+    loadSettings();
+
+    do {
+        cont = mainMenu();
+    } while (cont == 1);
+
+    close(serial_port);
+    return 0;
+}
+
+// Definition der Funktionen
 /**
  *
  * @param data
  */
-void setAlert(sensorData senData) {
+int setAlert(sensorData senData) {
+    // HIGH Gelb
+    // LOW Rot
+    digitalWrite(LED_PIN, HIGH);
+    delay(500);
+    digitalWrite(LED_PIN, LOW);
 
+    return 0;
 }
 
 /**
@@ -48,36 +119,27 @@ void setAlert(sensorData senData) {
  */
 int getSensorData() {
     while (1) {
-        ssize_t len = read(serial_port, &rawData, sizeof(rawData));  // Daten von der seriellen Schnittstelle lesen
+        ssize_t len = read(serial_port, &serialRead,
+                           sizeof(serialRead));  // Daten von der seriellen Schnittstelle lesen
         if (len > 0) {
             return 1;
         }
     }
 }
 
-// TODO: Ablauf statisch machen
 int backToMenu() {
-    char myChar = 'n';
-    int validInput = 0;
-    fflush(stdin);
+    char myChar;
     printf("Zurueck zum Hauptmenu?  y/n \n");
     fflush(stdin);
-    do {
-        scanf("%c", &myChar);
-        if (myChar != 'y' && myChar != 'n') {
-            printf("Falsche Eingabe\n");
-            validInput = 0;
-            break;
-        }
-        switch (myChar) {
-            case 'y':
-                validInput = 1;
-                return 1;
-            case 'n':
-                validInput = 1;
-                return 0;
-        }
-    } while (validInput == 0);
+    scanf("%c", &myChar);
+    if (myChar == 'y') {
+        return 1;
+    } else if (myChar == 'n') {
+        return 0;
+    } else {
+        printf("Falsche Eingabe\n");
+        backToMenu();
+    }
     return 0;
 }
 
@@ -88,34 +150,33 @@ int importData() {
     char filename[128];
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
-    for (;;) {
-        int value = backToMenu();
-        if (value == 1) {
-            /* return to Mainmenu */
-            return 0;
-        } else {
-            /* Import Values */
 
-            printf("Dateinamen waehlen!\n");
-            fflush(stdin);
-            scanf("%s", filename);
+    /* Import Values */
+    printf("Dateinamen waehlen!\n");
+    fflush(stdin);
+    scanf("%s", filename);
+    strcat(filename, ".txt");
 
-            FILE *fptr;
-            fptr = fopen(filename, "r");
+    FILE *fptr;
+    fptr = fopen(filename, "r");
 
-            char myString[100];
-            int i = 0;
-            while (fgets(myString, 100, fptr)) {
-                parseStringToStruct(myString, &dataArray[i], 5);
-                i++;
-            }
-            // Globalen Index setzten damit die importierten Daten vor den neuen geschoben werden.
-            dataIndex = i;
-            printf("%d", dataIndex);
-            sleep(2);
-            fclose(fptr);
-            return i;
-        }
+    char myString[100];
+    int i = 0;
+    while (fgets(myString, 100, fptr)) {
+        parseStringToStruct(myString, &dataArray[i], 5);
+        i++;
+    }
+    // Globalen Index setzten damit die importierten Daten vor den neuen geschoben werden.
+    dataIndex = i;
+    printf("%d", dataIndex);
+    sleep(2);
+    fclose(fptr);
+    return 0;
+
+    int value = backToMenu();
+    if (value == 1) {
+        /* return to Mainmenu */
+        return 0;
     }
 }
 
@@ -142,7 +203,8 @@ int exportData() {
             fptr = fopen(filename, "w");
 
             for (size_t i = 0; i < 10; i++) {
-                fprintf(fptr, "%f;%f;%f;%f;%f\n", dataArray[i].temp, dataArray[i].airhum, dataArray[i].grdhum, dataArray[i].brightness,
+                fprintf(fptr, "%f;%f;%f;%f;%f\n", dataArray[i].temp, dataArray[i].airhum, dataArray[i].grdhum,
+                        dataArray[i].brightness,
                         dataArray[i].alert);
             }
             fclose(fptr);
@@ -153,21 +215,57 @@ int exportData() {
     }
 }
 
+int saveSettings() {
+    return 0;
+}
+
+int loadSettings() {
+    return 0;
+}
+
+int changeSettings() {
+    char choiceKey;
+    printf(""
+           "Einstellungen ändern? y/n\n");
+    fflush(stdin);
+    scanf("%c", &choiceKey);
+    if (choiceKey == 'y') {
+        printf("Temperatur Obergrenze eingeben:\n");
+        fflush(stdin);
+        scanf("%lf", &alertSettings.tempMax);
+        printf("Temperatur Untergrenze eingeben:\n");
+        fflush(stdin);
+        scanf("%lf", &alertSettings.tempMin);
+        printf("Feuchtigkeitsgrenze eingeben:\n");
+        fflush(stdin);
+        scanf("%lf", &alertSettings.grdHum);
+    } else if (choiceKey == 'n') {
+        backToMenu();
+    } else {
+        printf("Falsche Eingabe.\n");
+        settingsMenu();
+    }
+    saveSettings();
+    return 0;
+}
+
 /**
  * Funktion für die Einstellungen
  */
-int settings() {
+int settingsMenu() {
     system("@cls||clear");
-    printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
-    for (;;) {
-        int value = backToMenu();
-        if (value == 1) {
-            /* return to Mainmenu */
-            return 0;
-        } else {
-            /* show Settings */
-        }
-    }
+    printf(""
+           "\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n"
+           "Einstellungen:\n"
+           "Temperatur Obergrenze:   %f\n"
+           "Temperatur Untergrenze:  %f\n"
+           "Grenze Bodenfeuchte:     %f\n",
+           alertSettings.tempMax, alertSettings.tempMin, alertSettings.grdHum);
+    fflush(stdin);
+    changeSettings();
+    fflush(stdin);
+    fflush(stdout);
+    return 0;
 }
 
 /**
@@ -193,18 +291,14 @@ void parseStringToStruct(const char *input, sensorData *data, int maxCount) {
                 data->grdhum = atof(token);
                 break;
             case 3:
+                data->brightness = atof(token);
                 break;
             case 4:
-                data->brightness= atof(token);
-                break;
-            case 5:
                 data->alert = atof(token);
         }
-
         token = strtok(NULL, ";");
         count++;
     }
-
     free(inputCopy);
 }
 
@@ -224,7 +318,7 @@ void formatValues(double value, char *result) {
 void dataTableOutput() {
     system("@cls||clear");
     printf(""
-           "Um die Messung abzubrechen, 'ESC' drücken.\n"
+           "Um die Messung abzubrechen, 'ESC' eingeben.\n"
            "|Temperatur         |Luftfeuchtigkeit   |Bodenfeuchtigkeit  |Helligkeit         |Alarm              |\n"
            "|-------------------|-------------------|-------------------|-------------------|-------------------|\n");
 
@@ -247,7 +341,7 @@ void readDataOutput() {
     char key = 27;
 
     if (arraySize != 0) {
-        for(int j = 0; j < arraySize; j++) {
+        for (int j = 0; j < arraySize; j++) {
             dataTableOutput();
         }
     }
@@ -256,7 +350,7 @@ void readDataOutput() {
         // Wenn sensordaten empfangen
         getSensorData();
         // Sensordaten als String in das Struct speichern
-        parseStringToStruct(rawData, &dataArray[arraySize], 5);
+        parseStringToStruct(serialRead, &dataArray[arraySize], 4);
         // Daten ausgeben
         dataTableOutput();
         if (getchar() == key) {
@@ -272,13 +366,13 @@ int mainMenu() {
     char myChar;
     system("@cls||clear");
     printf(""
-            "\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n"
-            "\n\nHauptmenu\n"
-            "1. Messung\n"
-            "2. Messung importieren\n"
-            "3. Messung exportieren\n"
-            "4. Einstellungen\n"
-            "5. Programm beenden\n\n");
+           "\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n"
+           "\n\nHauptmenu\n"
+           "1. Messung\n"
+           "2. Messung importieren\n"
+           "3. Messung exportieren\n"
+           "4. Einstellungen\n"
+           "5. Programm beenden\n\n");
     fflush(stdin);
     scanf("%c", &myChar);
     switch (myChar) {
@@ -295,7 +389,7 @@ int mainMenu() {
             break;
         case '4':
             printf("Einstellungen\n");
-            settings();
+            settingsMenu();
             break;
         case '5':
             return 0;
@@ -303,27 +397,4 @@ int mainMenu() {
             return 1;
     }
     return 1;
-}
-
-int main() {
-    int cont;
-    // Serielle Schnittstelle öffnen
-    serial_port = open("/dev/ttyACM0", O_RDWR);
-
-    struct termios tty;
-    memset(&tty, 0, sizeof(tty));
-
-    // Serielle Schnittstellenkonfiguration
-    tty.c_cflag = B9600;  // Baudrate
-    tty.c_cflag |= CS8;   // 8 Datenbits
-    tty.c_cflag |= CLOCAL | CREAD;  // Lokale Verbindung, Empfang aktivieren
-
-    tcsetattr(serial_port, TCSANOW, &tty);  // Konfiguration anwenden
-
-    do {
-        cont = mainMenu();
-    } while (cont == 1);
-
-    close(serial_port);
-    return 0;
 }
