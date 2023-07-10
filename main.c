@@ -6,6 +6,7 @@
 #include <termios.h>
 #include <wiringPi.h>
 
+// Datentypen definieren
 typedef struct {
     double temp;
     double airhum;
@@ -19,7 +20,6 @@ typedef struct {
     double tempMin;
     double grdHum;
 } alerts;
-
 
 //Prototypen definieren
 int mainMenu();
@@ -50,7 +50,7 @@ void formatValues(double value, char *result);
 
 void parseStringToStruct(const char *input, sensorData *data, int maxCount);
 
-// Globale Variablen
+// Globale Variablen definieren
 int LED_PIN = 2;
 char serialRead[255];
 int arraySize = 0;
@@ -61,6 +61,8 @@ alerts alertSettings = {.tempMax = 50.00, .tempMin = 2.00, .grdHum = 20.00};
 sensorData dataArray[1000];
 sensorData lastRead;
 
+
+// Main Funktion definieren
 /**
  *
  * @return
@@ -98,7 +100,7 @@ int main() {
     return 0;
 }
 
-// Definition der Funktionen
+// Funktionen definieren
 /**
  *
  * @param data
@@ -118,9 +120,9 @@ int setAlert(sensorData senData) {
  * @return
  */
 int getSensorData() {
+    // Daten von der seriellen Schnittstelle lesen
     while (1) {
-        ssize_t len = read(serial_port, &serialRead,
-                           sizeof(serialRead));  // Daten von der seriellen Schnittstelle lesen
+        ssize_t len = read(serial_port, &serialRead, sizeof(serialRead));
         if (len > 0) {
             return 1;
         }
