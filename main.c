@@ -40,7 +40,7 @@ int exportData();
 
 int getSensorData();
 
-int setAlert(sensorData senData);
+int setAlert();
 
 void dataTableOutput();
 
@@ -52,12 +52,16 @@ void parseStringToStruct(const char *input, sensorData *data, int maxCount);
 
 // Globale Variablen definieren
 int LED_PIN = 2;
+char settingsFile[128] = "settings.txt";
 char serialRead[255];
 int arraySize = 0;
 int arrayMaxSize = 1000;
 int dataIndex = 0;
 int serial_port;
-alerts alertSettings = {.tempMax = 50.00, .tempMin = 2.00, .grdHum = 20.00};
+alerts alertSettings = {
+        .tempMax = 50.00,
+        .tempMin = 2.00,
+        .grdHum = 20.00};
 sensorData dataArray[1000];
 sensorData lastRead;
 
@@ -106,13 +110,17 @@ int main() {
  *  Funktion die den LED Alarm bei bestimmten Schwellenwerten auslöst
  * @param data
  */
-int setAlert(sensorData senData) {
+int setAlert() {
     // HIGH Gelb
     // LOW Rot
-    digitalWrite(LED_PIN, HIGH);
-    delay(500);
-    digitalWrite(LED_PIN, LOW);
-
+    if (
+            lastRead.grdhum < alertSettings.grdHum ||
+            lastRead.temp < alertSettings.tempMin ||
+            lastRead.temp > alertSettings.tempMax) {
+        digitalWrite(LED_PIN, LOW);
+    } else {
+        digitalWrite(LED_PIN, HIGH);
+    }
     return 0;
 }
 
@@ -169,7 +177,9 @@ int importData() {
     // File pointer definieren und datei öffnen
     FILE *fptr;
     fptr = fopen(filename, "r");
-
+    if (!fptr) {
+        return 0;
+    }
     // Variable für eine Zeile definieren
     char myString[100];
     int i = 0;
@@ -179,7 +189,7 @@ int importData() {
         i++;
     }
     // Globalen Index setzten damit die importierten Daten vor den neuen geschoben werden.
-    dataIndex = i;
+    arraySize = i;
     printf("%d", dataIndex);
     sleep(2);
     fclose(fptr);
@@ -228,12 +238,51 @@ int exportData() {
 }
 
 int saveSettings() {
+    FILE *fptr;
+    fptr = fopen(settingsFile, "w");
+    fprintf(fptr, "%f;%f;%f\n", alertSettings.tempMax, alertSettings.tempMin, alertSettings.grdHum);
+    fclose(fptr);
+    sleep(2);
     return 0;
 }
 
 int loadSettings() {
+    // File pointer definieren und datei öffnen
+    FILE *fptr;
+    fptr = fopen(settingsFile, "r");
+    if (!fptr) {
+        return 0;
+    }
+    // Variable für eine Zeile definieren
+    char myString[100];
+    fgets(myString, 100, fptr);
+
+    char *inputCopy = strdup(myString);
+    char *token = strtok(inputCopy, ";");
+
+    int count = 0;
+    while (token != NULL && count < 3) {
+        switch (count) {
+            case 0:
+                alertSettings.tempMax = atof(token);
+                break;
+            case 1:
+                alertSettings.tempMin = atof(token);
+                break;
+            case 2:
+                alertSettings.grdHum = atof(token);
+                break;
+        }
+        token = strtok(NULL, ";");
+        count++;
+    }
+    free(inputCopy);
+
+    fclose(fptr);
+    sleep(2);
     return 0;
 }
+
 /**
  * Funktion um die Schwellenwerte zu ändern
  */
