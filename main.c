@@ -64,7 +64,7 @@ sensorData lastRead;
 
 // Main Funktion definieren
 /**
- *
+ * Main Funktion
  * @return
  */
 int main() {
@@ -92,6 +92,7 @@ int main() {
     // Einstellungen laden
     loadSettings();
 
+    // Hauptmenu anzeigen
     do {
         cont = mainMenu();
     } while (cont == 1);
@@ -102,7 +103,7 @@ int main() {
 
 // Funktionen definieren
 /**
- *
+ *  Funktion die den LED Alarm bei bestimmten Schwellenwerten auslöst
  * @param data
  */
 int setAlert(sensorData senData) {
@@ -129,6 +130,11 @@ int getSensorData() {
     }
 }
 
+/**
+ * Abfrage ob ins Hauptmenu gewecheslt werden soll
+ * Abfrage nach y oder n Eingabe 
+ * @return
+ */
 int backToMenu() {
     char myChar;
     printf("Zurueck zum Hauptmenu?  y/n \n");
@@ -153,17 +159,21 @@ int importData() {
     system("@cls||clear");
     printf("\n---------------------------\n| Messstation Blumentopf! |\n---------------------------\n\n");
 
-    /* Import Values */
+    // Dateinamen vom User abfragen
     printf("Dateinamen waehlen!\n");
     fflush(stdin);
     scanf("%s", filename);
+    // An den Dateinamen die .txt endung hinzufügen
     strcat(filename, ".txt");
 
+    // File pointer definieren und datei öffnen
     FILE *fptr;
     fptr = fopen(filename, "r");
 
+    // Variable für eine Zeile definieren
     char myString[100];
     int i = 0;
+    // Datei Zeile für Zeile lesen und in das Struct laden
     while (fgets(myString, 100, fptr)) {
         parseStringToStruct(myString, &dataArray[i], 5);
         i++;
@@ -224,7 +234,9 @@ int saveSettings() {
 int loadSettings() {
     return 0;
 }
-
+/**
+ * Funktion um die Schwellenwerte zu ändern
+ */
 int changeSettings() {
     char choiceKey;
     printf(""
@@ -336,18 +348,20 @@ void dataTableOutput() {
 }
 
 /**
- *
+ *  Funktion um die Daten in einer Tabelle anzuzeigen
+ * Wenn Daten Importiert werden, werden diese vor den neuen Messungen geschoben
  * @return
  */
 void readDataOutput() {
     char key = 27;
-
+    // Wenn bereits werte Importiert wurden
     if (arraySize != 0) {
+        // Gebe alle Importierten Werte aus
         for (int j = 0; j < arraySize; j++) {
             dataTableOutput();
         }
     }
-
+    // Messwerte empfangen
     for (; arraySize < arrayMaxSize; arraySize++) {
         // Wenn sensordaten empfangen
         getSensorData();
