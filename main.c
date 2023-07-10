@@ -123,6 +123,17 @@ int setAlert() {
     return 0;
 }
 
+int getAlert(sensorData checkData) {
+    if (
+            checkData.grdhum < alertSettings.grdHum ||
+            checkData.temp < alertSettings.tempMin ||
+            checkData.temp > alertSettings.tempMax) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 /**
  * Versucht die Sensordaten auszulesen
  * @return
@@ -223,6 +234,10 @@ int exportData() {
     }
 }
 
+/**
+ * Speichert die Grenzeinstellungen persistent in einer Datei ab
+ * @return
+ */
 int saveSettings() {
     FILE *fptr;
     fptr = fopen(settingsFile, "w");
@@ -232,6 +247,10 @@ int saveSettings() {
     return 0;
 }
 
+/**
+ * Lädt die Einstellungen bei Programmstart aus der Einstellungsdatei.
+ * @return
+ */
 int loadSettings() {
     // File pointer definieren und datei öffnen
     FILE *fptr;
@@ -289,7 +308,7 @@ int changeSettings() {
         fflush(stdin);
         scanf("%lf", &alertSettings.grdHum);
     } else if (choiceKey == 'n') {
-        backToMenu();
+        return 0;
     } else {
         printf("Falsche Eingabe.\n");
         settingsMenu();
@@ -329,9 +348,9 @@ void parseStringToStruct(const char *input, sensorData *data, int maxCount) {
     char *token = strtok(inputCopy, ";");
 
     int count = 0;
-    // geht den String nach und nach durch und weist die Daten zwischen den Semikulon den Struct Variablen zu
+    // geht den String nach und nach durch und weist die Daten zwischen jedem Semikolon den Struct Variablen zu
     while (token != NULL && count < maxCount) {
-        // Da die Daten in fester Reihenfolge sind werden sie Nacheinander ausgelesen und zugewiesen
+        // Da die Daten in fester Reihenfolge sind, werden sie nacheinander ausgelesen und zugewiesen
         switch (count) {
             case 0:
                 // Umwandlung String zu Float
@@ -415,6 +434,7 @@ void readDataOutput() {
         getSensorData();
         // Sensordaten als String in das Struct speichern
         parseStringToStruct(serialRead, &dataArray[arraySize], 4);
+        dataArray[arraySize].alert = getAlert(dataArray[arraySize]);
         lastRead = dataArray[arraySize];
         setAlert();
         // Daten ausgeben
